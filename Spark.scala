@@ -51,14 +51,6 @@ dfCountProdId.show
 // SortMergeJoin
 dfOrderItems.join(dfProducts, Seq("product_id")).explain
 
-// HashShuffleJoin
-spark.conf.set("spark.sql.autoBroadcastJoinThreshold", "1")
-spark.conf.set("spark.sql.join.preferSortMergeJoin", false)
-spark.conf.set("spark.sql.shuffle.partitions", 200)
-dfOrderItems.join(dfProducts, Seq("product_id")).explain
-spark.conf.set("spark.sql.join.preferSortMergeJoin", true)
-spark.conf.set("spark.sql.autoBroadcastJoinThreshold", "-1")
-
 // Amplifying skew
 val dfOrderItemsSkew = {
     dfOrderItems
@@ -79,7 +71,5 @@ dfOrderItemsSkew.transform(randomSaltJoin(dfProducts, Seq("product_id"), seed=10
 dfProducts.where(col("product_id") === "4244733e06e7ecb4970a6e2683c13e61").withColumn("salt_col", round(rand(10L) * 3)).select("product_id", "salt_col").show(truncate=false)
 dfOrderItemsSkew.where(col("product_id") === "4244733e06e7ecb4970a6e2683c13e61").withColumn("salt_col", explode(array((0 to 3).map(lit):_*))).select("product_id", "salt_col", "order_id").show(truncate=false)
 
-dfOrderItemsSkew
-  .where(col("product_id") === "4244733e06e7ecb4970a6e2683c13e61")
-  .withColumn("salt_col", round(rand(10L) * 3)).select("product_id", "salt_col", "order_id")
-  .show(truncate=false)
+
+dfProducts.where(col("product_id") === "4244733e06e7ecb4970a6e2683c13e61").withColumn("salt_col", explode(array((0 to 3).map(lit):_*))).select("product_id", "salt_col").show(truncate=false)
